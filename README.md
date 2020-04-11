@@ -6,4 +6,4 @@
 
 ## Conditional distributional of $Y|X$
 
-<img src="q.png" alt="conditional quantile regress" width="800">
+<img src="q.png" alt="conditional quantile regression" width="800">
