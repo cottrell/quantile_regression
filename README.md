@@ -2,8 +2,8 @@
 
 ## Unconditional distribution of $Y$
 
-<img src="q_nox.png" alt="reeeeeedme" width="800">
+<img src="q_nox.png" alt="unconditional quantile regression" width="800">
 
 ## Conditional distributional of $Y|X$
 
-<img src="q.png" alt="reeeeeedme" width="800">
+<img src="q.png" alt="conditional quantile regress" width="800">
