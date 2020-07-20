@@ -57,12 +57,9 @@ def get_data(seed=1, m=250, n_x=1, n_tau=11, L=2):
     return locals()
 
 
-def make_layers(*,
-    dims,
-    activation="tanh",
-    final_activation=None,
-    kernel_constraint="nonneg",
-    kernel_initializer="uniform"):
+def make_layers(
+    *, dims, activation="tanh", final_activation=None, kernel_constraint="nonneg", kernel_initializer="uniform"
+):
     """
     A utility for making layers.
     If all kernels are non-negative you should have monotonic property.
@@ -75,10 +72,15 @@ def make_layers(*,
     for i, dim in enumerate(dims):
         if i == len(dims) - 1:
             activation = final_activation
-        layers.append(tf.keras.layers.Dense(dim,
-            kernel_initializer=kernel_initializer,
-            kernel_constraint=kernel_constraint, activation=activation,
-        dtype=tf.float64,))
+        layers.append(
+            tf.keras.layers.Dense(
+                dim,
+                kernel_initializer=kernel_initializer,
+                kernel_constraint=kernel_constraint,
+                activation=activation,
+                dtype=tf.float64,
+            )
+        )
     return layers
 
 
@@ -99,6 +101,7 @@ def final_reduce(J):
     # generally we want to be extrinsic in n_samples, intrinsic in n_tau/n_yc
     return tf.reduce_sum(tf.reduce_mean(J, axis=[1, 2]), axis=0)
 
+
 def rho_quantile_loss(tau_y, u):
     tau, y = tau_y
     tf.debugging.assert_rank(y, 2, f"y should be rank 2")
@@ -108,6 +111,7 @@ def rho_quantile_loss(tau_y, u):
     tau = tau[None, :, :]
     J = u * (tau - tf.where(u <= np.float64(0.0), np.float64(1.0), np.float64(0.0)))
     return final_reduce(J)
+
 
 def rho_expectile_loss(tau_y, u):
     tau, y = tau_y
@@ -119,14 +123,14 @@ def rho_expectile_loss(tau_y, u):
     J = u ** 2 * (tau - tf.where(u <= 0.0, 1.0, 0.0))
     return final_reduce(J)
 
+
 def logistic_loss(yc_y, u):
     yc, y = yc_y
     tf.debugging.assert_rank(y, 2, f"y should be rank 2")
     tf.debugging.assert_rank(yc, 2, f"yc should be rank 2")
     # p = tf.where(y[:, None, :] <= yc[None, :, :], np.float64(1.0), np.float64(0.0))
     # J = p * tf.math.log(u[None, :, :]) + (1 - p) * tf.math.log(1 - u[None, :, :])
-    J = tf.where(y[:, None, :] <= yc[None, :, :], tf.math.log(u[None, :, :]),
-        tf.math.log(1 - u[None, :, :]))
+    J = tf.where(y[:, None, :] <= yc[None, :, :], tf.math.log(u[None, :, :]), tf.math.log(1 - u[None, :, :]))
     return final_reduce(-J)
 
 
@@ -139,8 +143,7 @@ class QuantileNetworkNoX(tf.keras.models.Model):
 
     def __init__(self, *, dims):
         super().__init__()
-        self._my_layers = make_layers( dims=dims, activation="tanh",
-            kernel_constraint="nonneg")
+        self._my_layers = make_layers(dims=dims, activation="tanh", kernel_constraint="nonneg")
 
     def quantile(self, tau):
         tf.debugging.assert_rank(tau, 2, message=f"tau should be rank two for now")
@@ -152,6 +155,7 @@ class QuantileNetworkNoX(tf.keras.models.Model):
         tau, y = inputs
         return self.quantile(tau)
 
+
 class CDFNetworkNoX(tf.keras.models.Model):
     """Thresholded logistic regression.
 
@@ -162,8 +166,9 @@ class CDFNetworkNoX(tf.keras.models.Model):
 
     def __init__(self, *, dims):
         super().__init__()
-        self._my_layers = make_layers(dims=dims, activation="tanh",
-            kernel_constraint="nonneg", final_activation="sigmoid")
+        self._my_layers = make_layers(
+            dims=dims, activation="tanh", kernel_constraint="nonneg", final_activation="sigmoid"
+        )
 
     def cdf(self, yc):
         tf.debugging.assert_rank(yc, 2, message=f"yc should be rank two for now")
@@ -175,7 +180,6 @@ class CDFNetworkNoX(tf.keras.models.Model):
         """Use this signature to support keras compile method"""
         yc, y = inputs
         return self.cdf(yc)
-
 
 
 def sanity_plot_nox(steps=1000):
@@ -214,6 +218,7 @@ def sanity_plot_nox(steps=1000):
     fig.tight_layout()
     fig.show()
     return locals()
+
 
 def cdfsanity_plot_nox(steps=1000):
     l = get_data()
@@ -265,8 +270,9 @@ class QuantileNetwork(tf.keras.models.Model):
     def __init__(self, *, tau_dims, x_dims, final_dims):
         super().__init__()
         self._my_tau_layers = make_layers(dims=tau_dims, activation="tanh")
-        self._my_x_layers = make_layers(dims=tau_dims, activation="tanh",
-            kernel_constraint=None, kernel_initializer="glorot_uniform")
+        self._my_x_layers = make_layers(
+            dims=tau_dims, activation="tanh", kernel_constraint=None, kernel_initializer="glorot_uniform"
+        )
         self._my_x_layers.append(lambda x: tf.square(x))
         self._final_layers = make_layers(dims=final_dims, activation="linear")
 
@@ -285,6 +291,7 @@ class QuantileNetwork(tf.keras.models.Model):
         tau, y, x = inputs
         return self.quantile(tau, x)
 
+
 class CDFNetwork(tf.keras.models.Model):
     """
     Monotonic in yc.
@@ -298,14 +305,13 @@ class CDFNetwork(tf.keras.models.Model):
 
     def __init__(self, *, yc_dims, x_dims, final_dims, epsilon=1e-12):
         super().__init__()
-        self._my_yc_layers = make_layers(dims=yc_dims, activation="tanh",
-            kernel_constraint="nonneg")
-        self._my_x_layers = make_layers(dims=yc_dims, activation="tanh",
-            kernel_constraint=None, kernel_initializer="glorot_uniform")
+        self._my_yc_layers = make_layers(dims=yc_dims, activation="tanh", kernel_constraint="nonneg")
+        self._my_x_layers = make_layers(
+            dims=yc_dims, activation="tanh", kernel_constraint=None, kernel_initializer="glorot_uniform"
+        )
         self._my_x_layers.append(lambda x: tf.square(x))
         # THIS LAST ONE MUST OUTPUT (0, 1)
-        self._final_layers = make_layers(dims=final_dims,
-            activation="linear", final_activation="sigmoid")
+        self._final_layers = make_layers(dims=final_dims, activation="linear", final_activation="sigmoid")
         self.epsilon = epsilon
 
     def cdf(self, yc, x):
@@ -371,8 +377,9 @@ def sanity_plot(steps=1000):
     ax.semilogy(loss)
 
     fig.show()
-    figure(1) # set it back
+    figure(1)  # set it back
     return locals()
+
 
 def cdfsanity_plot(steps=5000):
     l = get_data()
@@ -424,7 +431,7 @@ def cdfsanity_plot(steps=5000):
     ax.semilogy(loss)
 
     fig.show()
-    figure(1) # set it back
+    figure(1)  # set it back
     return locals()
 
 
