@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import functools
 from scipy.special import logit
+from .quantile_regression import get_data
 
 class Dense():
     """
@@ -107,16 +108,28 @@ class QuantileNetworkNoX():
         return self.quantile(tau)
 
 
+def rho_quantile_loss(tau_y, uu):
+    tau, y = tau_y
+    # we now have 3 batch dims! y x tau x params
+    uu = y[:, None, None] - uu[None]
+    tau = tau[None, :, None]
+    J = uu * (tau - np.where(uu <= 0, 1, 0))
+    # NOTE the reduce is different that in the tf example
+    # we are preserving differences across the param samples
+    # we want to be extrinsic in n_samples, intrinsic in n_tau
+    return np.sum(np.mean(J, axis=1).squeeze(), axis=0)
+
+
 def sanity_plot_nox(steps=1000):
     l = get_data()
     # I can't remember why these were 2d, probably something to do with tf
     tau = l["tau"]
-    y = l["y"].squeeze()
+    y = l["y"]
     weight_dim = 20
     model = QuantileNetworkNoX(
             input_dim=1,
             weight_dim=weight_dim,
             dims=[16, 16, 1]
             )
-    # loss = rho_quantile_loss((tau, y), model((tau, y)))
+    loss = rho_quantile_loss((tau, y), model((tau, y)))
     return locals()
