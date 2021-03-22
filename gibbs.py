@@ -52,7 +52,9 @@ class Dense():
         self._bias = weights[1]
 
     def __call__(self, inputs):
-        x = np.tensordot(inputs, self.kernel, axes=1) + self.bias[None, :]
+        # print(f'einsum {inputs.shape} x {self.kernel.shape}')
+        x = np.einsum('ijk,jkl->ijl', inputs, self.kernel) #  + self.bias[None, :]
+        # print(f'result {x.shape}')
         return x if self.activation is None else self.activation(x)
 
 def make_layers(*, input_dim, weight_dim, dims, activation="tanh", final_activation=None, kernel_constraint="nonneg", kernel_initializer="uniform"):
@@ -68,12 +70,13 @@ def make_layers(*, input_dim, weight_dim, dims, activation="tanh", final_activat
                       kernel_constraint=kernel_constraint,
                       activation=activation,
                       dtype=np.float64)
-        layer.initialize_weights(input_dim, weight_dim, dim)
+        layer.initialize_weights(weight_dim, input_dim, dim)
         layers.append(layer)
+        input_dim = dim
     return layers
 
-def reduce_layers(input, layers):
-    return functools.reduce(lambda x, y: y(x), [input] + layers)
+def reduce_layers(inputs, layers):
+    return functools.reduce(lambda x, y: y(x), [inputs] + layers)
 
 class QuantileNetworkNoX():
     def __init__(self, *, input_dim, weight_dim, dims):
@@ -91,7 +94,11 @@ class QuantileNetworkNoX():
 
 
     def quantile(self, tau):
-        # TODO: 2nd layer onward dims are wrong
+        # make tau be 3d because inputs to future layers will be 3d.
+        # batch dims are (tau, theta) space
+        # inputs are (tau, theta, blah)
+        # see the einsum calc for details
+        tau = tau[:, None, :]
         u = logit(tau)
         return reduce_layers(u, self._my_layers)
 
@@ -103,11 +110,11 @@ class QuantileNetworkNoX():
 def sanity_plot_nox(steps=1000):
     l = get_data()
     # I can't remember why these were 2d, probably something to do with tf
-    tau = l["tau"].squeeze()
+    tau = l["tau"]
     y = l["y"].squeeze()
     weight_dim = 20
     model = QuantileNetworkNoX(
-            input_dim=tau.shape[0],
+            input_dim=1,
             weight_dim=weight_dim,
             dims=[16, 16, 1]
             )

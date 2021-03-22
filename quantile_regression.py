@@ -146,6 +146,8 @@ class QuantileNetworkNoX(tf.keras.models.Model):
         self._my_layers = make_layers(dims=dims, activation="tanh", kernel_constraint="nonneg")
 
     def quantile(self, tau):
+        # tau is for example shape (11, 1)
+        # you treat tau dim like data, broadcast across it
         tf.debugging.assert_rank(tau, 2, message=f"tau should be rank two for now")
         u = logit(tau)  # map from (0, 1) to (-infty, infty)
         return reduce_layers(u, self._my_layers)
@@ -196,6 +198,8 @@ def sanity_plot_nox(steps=1000):
         g = tape.gradient(loss, model.trainable_variables)
         opt.apply_gradients(zip(g, model.trainable_variables))
         return loss
+
+    asdf
 
     # # model.compile(loss=rho_quantile_loss, optimizer=opt)
     fig = figure(1)
