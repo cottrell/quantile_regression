@@ -48,7 +48,7 @@ class Dense():
     def weights(self):
         return [self._kernel, self._bias]
 
-    def set_weights(self, *weights):
+    def set_weights(self, weights):
         self._kernel = weights[0]
         self._bias = weights[1]
 
@@ -119,8 +119,13 @@ class QuantileNetworkNoX():
         tau, y = inputs
         return self.quantile(tau)
 
-    def get_weights(self):
+    @property
+    def weights(self):
         return [x.weights for x in self._my_layers]
+
+    def set_weights(self, weights):
+        for w, layer in zip(weights, self._my_layers):
+            layer.set_weights(w)
 
 def check_tau(tau):
     assert len(tau.shape) == 2
@@ -152,4 +157,6 @@ def sanity_plot_nox(steps=1000):
             dims=[16, 16, 1]
             )
     loss = rho_quantile_loss((tau, y), model((tau, y)))
+    weights = model.weights
+    model.set_weights(weights)
     return locals()
