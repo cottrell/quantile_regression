@@ -29,7 +29,7 @@ class Dense():
         if self.activation == 'tanh':
             self.activation = np.tanh
 
-    def initialize_weights(self, input_dim, weight_dim, output_dim):
+    def initialize_weights(self, *, input_dim, weight_dim, output_dim):
         ki = np.random.randn
         if self.kernel_initializer == 'uniform':
             ki = np.random.rand
@@ -53,8 +53,11 @@ class Dense():
         self._bias = weights[1]
 
     def __call__(self, inputs):
+        # inputs is tau_dim, weight_dim, input_dim
+        # kernal is input_dim x weight_dim x output_dim
+        # output will be tau_dim, weight_dim, output_dim
         # print(f'einsum {inputs.shape} x {self.kernel.shape}')
-        x = np.einsum('ijk,jkl->ijl', inputs, self.kernel) #  + self.bias[None, :]
+        x = np.einsum('ijk,kjl->ijl', inputs, self.kernel) #  + self.bias[None, :]
         # print(f'result {x.shape}')
         return x if self.activation is None else self.activation(x)
 
@@ -71,12 +74,17 @@ def make_layers(*, input_dim, weight_dim, dims, activation="tanh", final_activat
                       kernel_constraint=kernel_constraint,
                       activation=activation,
                       dtype=np.float64)
-        layer.initialize_weights(weight_dim, input_dim, dim)
+        layer.initialize_weights(input_dim=input_dim, weight_dim=weight_dim, output_dim=dim)
         layers.append(layer)
         input_dim = dim
     return layers
 
 def reduce_layers(inputs, layers):
+    # for debug:
+    # out = inputs
+    # for i, layer in enumerate(layers):
+    #     out = layer(out)
+    # return out
     return functools.reduce(lambda x, y: y(x), [inputs] + layers)
 
 class QuantileNetworkNoX():
@@ -85,6 +93,9 @@ class QuantileNetworkNoX():
         input_dim: feature dim
         weight_dim: number of weight samples to run in parallel
         dims: sequence of output/input dims
+
+        Remember the confusing thing in the 1d case is that I have left out the n_samples batch dim entirely until the loss calculation. This is probably confusing and should be changed so it is
+        easier to map to the Y|X code.
         """
         self._my_layers = make_layers(
                 input_dim=input_dim,
@@ -95,6 +106,7 @@ class QuantileNetworkNoX():
 
 
     def quantile(self, tau):
+        check_tau(tau)
         # make tau be 3d because inputs to future layers will be 3d.
         # batch dims are (tau, theta) space
         # inputs are (tau, theta, blah)
@@ -107,16 +119,24 @@ class QuantileNetworkNoX():
         tau, y = inputs
         return self.quantile(tau)
 
+    def get_weights(self):
+        return [x.weights for x in self._my_layers]
+
+def check_tau(tau):
+    assert len(tau.shape) == 2
+    assert tau.shape[1] == 1, f'I do not think it ever makes sense to have 2nd dimension of tau be different from one. Got {tau.shape}'
+
 
 def rho_quantile_loss(tau_y, uu):
     tau, y = tau_y
-    # we now have 3 batch dims! y x tau x params
+    check_tau(tau)
+    # we now have 3 batch dims! data_samples x tau x weight_samples
     uu = y[:, None, None] - uu[None]
     tau = tau[None, :, None]
     J = uu * (tau - np.where(uu <= 0, 1, 0))
     # NOTE the reduce is different that in the tf example
-    # we are preserving differences across the param samples
-    # we want to be extrinsic in n_samples, intrinsic in n_tau
+    # we are not summing across the weight samples
+    # we want to be extrinsic in n_samples (sum), intrinsic in n_tau (mean)
     return np.sum(np.mean(J, axis=1).squeeze(), axis=0)
 
 
@@ -127,7 +147,7 @@ def sanity_plot_nox(steps=1000):
     y = l["y"]
     weight_dim = 20
     model = QuantileNetworkNoX(
-            input_dim=1,
+            input_dim=1,  # tau.shape[1] if tau is still 2d
             weight_dim=weight_dim,
             dims=[16, 16, 1]
             )
