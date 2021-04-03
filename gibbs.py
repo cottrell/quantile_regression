@@ -160,3 +160,20 @@ def sanity_plot_nox(steps=1000):
     weights = model.weights
     model.set_weights(weights)
     return locals()
+
+
+def step(*, J_old, x_old, J_new, x_new, n_store):
+    """
+    see bottleneck.argpartsort vs np.argpartition
+    You have n_old, n_new elements.
+    You want to take the best n = min(n_store, n_old + n_new)
+    elements and store them discarding the rest.
+    I suppose you could also store the worst if you thought that was helpful.
+    """
+    n_old = len(J_old)
+    n_new = len(J_new)
+    n_best = min(n_store, n_old + n_new)
+    if n_best <= n_store:
+        pass
+
+
