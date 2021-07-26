@@ -2,6 +2,9 @@
 Some experiment with Gibbs sampling as opposed to optimization.
 
 Try to use pure numpy where possible without re-writing the function from the other sections.
+
+WARNING: partially finished/ongoing I *think* I added an extra sample dimension for gibbs population weighting.
+
 """
 import numpy as np
 import pandas as pd

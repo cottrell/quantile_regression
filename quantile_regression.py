@@ -199,9 +199,7 @@ def sanity_plot_nox(steps=1000):
         opt.apply_gradients(zip(g, model.trainable_variables))
         return loss
 
-    asdf
-
-    # # model.compile(loss=rho_quantile_loss, optimizer=opt)
+    # model.compile(loss=rho_quantile_loss, optimizer=opt)
     fig = figure(1)
     fig.clf()
     ax = fig.subplots(1, 1)
