@@ -10,6 +10,8 @@ import numpy as np
 import pandas as pd
 import requests
 import os
+from scipy.optimize import linprog
+from cvxopt import matrix, solvers
 
 filename = 'se_cvxopt_example.csv.gz'
 
@@ -28,7 +30,6 @@ except NameError:
 
 tau = 0.3
 
-from cvxopt import matrix, solvers
 
 X = pd.DataFrame(columns=[0, 1])
 X[1] = base["area"]  # data points for independent variable area
@@ -82,7 +83,6 @@ def solve_with_cvxopt():
     return locals()
 
 
-from scipy.optimize import linprog
 def solve_with_scipy():
     sol = linprog(cm, G, h, Am, bm)
     x = sol['x']
