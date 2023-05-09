@@ -121,3 +121,7 @@ def do():
     a = solve_with_cvxopt()
     b = solve_with_cvxopt()
     plot_solution(a['beta'], b['beta'])
+
+
+if __name__ == '__main__':
+    do()
