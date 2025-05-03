@@ -8,6 +8,10 @@ $$ J(\tau) = E\left(\rho(\tau, Y - u(\tau, X)|X\right)$$
 
 CDF regression objective
 
+test
+
+$$ a_c $$
+
 $$ J(y_c) = E\left(\mathbb{1}_{Y < y_c} \log v(y_c, X) + (1 - \mathbb{1}_{Y < y_c}) \log(1 - v(y_x, X)) | X\right)$$
 
 <img src="https://render.githubusercontent.com/render/math?math=J(y_c) = E\left(\mathbb{1}_{Y < y_c} \log v(y_c, X) + (1 - \mathbb{1}_{Y < y_c}) \log(1 - v(y_x, X)) | X\right)">
