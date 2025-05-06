@@ -66,4 +66,6 @@ The functions $u$, $v$ must be monotonic in $\tau$ and $y_c$ respectively.
 
 ## TODO
 
-- Do more quantitative error plots etc.
+- do more quantitative error plots etc.
+- consider CRPS (Continuous Ranked Probability Score) instead of CDF loss
+- normalizing flows ... i.e. round trip cdf and quantile as consistency constraint ... where is this done, is it actually doing anything to include this constraint.
