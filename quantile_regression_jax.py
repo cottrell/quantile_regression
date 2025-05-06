@@ -9,6 +9,8 @@ import optax
 
 from quantile_regression_common import get_data, set_consistent_figure_params
 
+# NOTE: WARNING: 2025-05-06 produced converting from tf to jax using claude etc lightly reviewed
+
 # Set up directories
 _mydir = os.path.dirname(os.path.abspath(__file__))
 _fig_dir = os.path.join(_mydir, 'figs/jax')
@@ -361,6 +363,7 @@ def sanity_plot_nox(steps=1000):
 
     # Plotting
     fig = plt.figure(figsize=(10, 6))
+    fig.clf()
     ax = fig.add_subplot(111)
 
     # Plot data
@@ -408,6 +411,7 @@ def cdfsanity_plot_nox(steps=1000):
 
     # Plotting
     fig = plt.figure(figsize=(10, 6))
+    fig.clf()
     ax = fig.add_subplot(111)
 
     # Plot data
@@ -456,6 +460,7 @@ def sanity_plot(steps=1000):
 
     # Plotting
     fig = plt.figure(1, figsize=(12, 6))
+    fig.clf()
     ax1 = fig.add_subplot(121)
     ax2 = fig.add_subplot(122)
 
@@ -523,6 +528,7 @@ def cdfsanity_plot(steps=1000):
 
     # Plotting
     fig = plt.figure(1, figsize=(12, 6))
+    fig.clf()
     ax1 = fig.add_subplot(121)
     ax2 = fig.add_subplot(122)
 
