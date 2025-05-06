@@ -5,13 +5,13 @@
 #
 
 import io
+import os
 
 import numpy as np
 import pandas as pd
 import requests
-import os
-from scipy.optimize import linprog
 from cvxopt import matrix, solvers
+from scipy.optimize import linprog
 
 filename = 'se_cvxopt_example.csv.gz'
 
@@ -70,6 +70,7 @@ G[:: n + 1] = -1.0
 # adding inequality constraints - right hand side (all zeros)
 h = matrix(0.0, (n, 1))
 
+
 def solve_with_cvxopt():
     # solving the model
     sol = solvers.lp(cm, G, h, Am, bm, solver='glpk')
@@ -94,6 +95,7 @@ def solve_with_scipy():
 
 def plot_solution(beta, beta2=None):
     import plotly.graph_objects as go
+
     x = X.values[:, 1]
     y = X.values[:, 2]
     z = b
@@ -105,14 +107,20 @@ def plot_solution(beta, beta2=None):
     ]
     if beta2 is not None:
         zp2 = X.values @ np.array(beta2).squeeze()
-        traces.extend([
-            go.Scatter3d(z=zp2, x=x, y=y, opacity=0.50, mode='markers', marker_size=3, marker_color='pink', name='B'),
-            go.Mesh3d(z=zp2, x=x, y=y, opacity=0.50, color='purple', name='Surface B'),
-        ])
+        traces.extend(
+            [
+                go.Scatter3d(
+                    z=zp2, x=x, y=y, opacity=0.50, mode='markers', marker_size=3, marker_color='pink', name='B'
+                ),
+                go.Mesh3d(z=zp2, x=x, y=y, opacity=0.50, color='purple', name='Surface B'),
+            ]
+        )
         print(f'len traces {len(traces)}')
 
     fig = go.Figure(data=traces)
-    fig.update_layout(title='quantile regression example', autosize=False, width=500, height=500, margin=dict(l=65, r=50, b=65, t=90))
+    fig.update_layout(
+        title='quantile regression example', autosize=False, width=500, height=500, margin=dict(l=65, r=50, b=65, t=90)
+    )
     fig.show()
     return locals()
 

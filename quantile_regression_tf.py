@@ -1,12 +1,18 @@
 import functools
+import os
 
+import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import tensorflow as tf
 import tensorflow.keras as keras
-from pylab import *
 
-ion()
+from quantile_regression_common import get_data, set_consistent_figure_params
+
+_mydir = os.path.dirname(os.path.abspath(__file__))
+_fig_dir = os.path.join(_mydir, 'figs/tf')
+
+# Create figure directory if it doesn't exist
+os.makedirs(_fig_dir, exist_ok=True)
 
 tf.keras.backend.set_floatx("float64")
 
@@ -26,35 +32,6 @@ def set_seed(seed=1):
         tf.random.set_random_seed(seed)
     else:
         tf.random.set_seed(seed)
-
-
-def get_data(seed=1, m=250, n_x=1, n_tau=11, L=2):
-    """
-    x ~ U(-2, 2)
-    y ~ N(mu(x), sigma(x))
-    """
-    set_seed(seed)
-    x = (2 * np.random.rand(m, n_x).astype(np.float64) - 1) * 2
-    i = np.argsort(x[:, 0])
-    x = x[i]  # to make plotting nicer
-    sigma = 0.4 * (1 + 5 / (10 * x[:, [0]] ** 2 + 1))
-    mu = x ** 2 + 0.3 * x
-    z = np.random.randn(m, 1).astype(np.float64)
-    y = mu + sigma * z
-    # yc and tau are same dimension, similar functionality
-    # this is confusing because mu, sigma are across samples mu(x)
-    # want yc for all x here.
-    # cheating to know the ranges, but whatever.
-    # will be good to see what happens where there is no data.
-    yc_max = np.max(y)
-    yc_min = np.min(y)
-    yc = np.linspace(yc_min, yc_max, n_tau).astype(np.float64)
-    yc = yc[:, None]
-    # A = np.random.randn(n_x, 1)
-    # y = y.dot(A)  # y is 1d
-    tau = np.linspace(1.0 / n_tau, 1 - 1.0 / n_tau, n_tau).astype(np.float64)
-    tau = tau[:, None]
-    return locals()
 
 
 def make_layers(
@@ -120,7 +97,7 @@ def rho_expectile_loss(tau_y, u):
     # tf.debugging.assert_rank(y, 3, f'y should be rank 3')
     tf.debugging.assert_rank(tau, 2, f"tau should be rank 2")
     tau = tau[None, :, :]
-    J = u ** 2 * (tau - tf.where(u <= 0.0, 1.0, 0.0))
+    J = u**2 * (tau - tf.where(u <= 0.0, 1.0, 0.0))
     return final_reduce(J)
 
 
@@ -200,7 +177,7 @@ def sanity_plot_nox(steps=1000):
         return loss
 
     # model.compile(loss=rho_quantile_loss, optimizer=opt)
-    fig = figure(1)
+    fig = plt.figure(1)
     fig.clf()
     ax = fig.subplots(1, 1)
     n = len(y)
@@ -218,7 +195,9 @@ def sanity_plot_nox(steps=1000):
     ax.set_ylabel('y')
     ax.set_title('quantile')
     fig.tight_layout()
-    fig.show()
+    fig_path = os.path.join(_fig_dir, 'q_nox.png')
+    plt.savefig(fig_path)
+    plt.show()
     return locals()
 
 
@@ -239,7 +218,7 @@ def cdfsanity_plot_nox(steps=1000):
         return loss
 
     # # model.compile(loss=rho_quantile_loss, optimizer=opt)
-    fig = figure(1)
+    fig = plt.figure(1)
     fig.clf()
     ax = fig.subplots(1, 1)
     n = len(y)
@@ -257,7 +236,9 @@ def cdfsanity_plot_nox(steps=1000):
     ax.set_ylabel('y')
     ax.set_title('CDF')
     fig.tight_layout()
-    fig.show()
+    fig_path = os.path.join(_fig_dir, 'p_nox.png')
+    plt.savefig(fig_path)
+    plt.show()
     return locals()
 
 
@@ -354,7 +335,7 @@ def sanity_plot(steps=1000):
     # does not work with, keras mangles dimensions
     # model.compile(loss=rho_quantile_loss, optimizer=opt)
 
-    fig = figure(1, figsize=(12, 6))
+    fig = plt.figure(1, figsize=(12, 6))
     fig.clf()
     ax = fig.subplots(1, 2)
     ax[0].plot(x[:, 0], y.squeeze(), ".", alpha=0.5, label='data')
@@ -374,12 +355,14 @@ def sanity_plot(steps=1000):
     ax[1].set_title('inferred quantiles')
     fig.tight_layout()
 
-    fig2 = figure(2, figsize=(12, 6))
+    fig2 = plt.figure(2, figsize=(12, 6))
     ax = fig2.gca()
     ax.semilogy(loss)
 
-    fig.show()
-    figure(1)  # set it back
+    fig_path = os.path.join(_fig_dir, 'q.png')
+    plt.figure(1)
+    plt.savefig(fig_path)
+    plt.show()
     return locals()
 
 
@@ -404,7 +387,7 @@ def cdfsanity_plot(steps=5000):
     # does not work with, keras mangles dimensions
     # model.compile(loss=rho_quantile_loss, optimizer=opt)
 
-    fig = figure(1, figsize=(12, 6))
+    fig = plt.figure(1, figsize=(12, 6))
     fig.clf()
     ax = fig.subplots(1, 2)
     ax[0].plot(x[:, 0], y.squeeze(), ".", alpha=0.5, label='data')
@@ -428,22 +411,21 @@ def cdfsanity_plot(steps=5000):
     ax[1].set_title('inferred cdf (contour plot)')
     fig.tight_layout()
 
-    fig2 = figure(2, figsize=(12, 6))
+    fig2 = plt.figure(2, figsize=(12, 6))
     ax = fig2.gca()
     ax.semilogy(loss)
 
-    fig.show()
-    figure(1)  # set it back
+    fig_path = os.path.join(_fig_dir, 'p.png')
+    plt.figure(1)
+    plt.savefig(fig_path)
+    plt.show()
     return locals()
 
 
 if __name__ == '__main__':
-    ioff()
+    set_consistent_figure_params()
+    plt.ion()
     sanity_plot_nox()
-    savefig('q_nox.png')
     sanity_plot()
-    savefig('q.png')
     cdfsanity_plot_nox()
-    savefig('p_nox.png')
     cdfsanity_plot()
-    savefig('p.png')
