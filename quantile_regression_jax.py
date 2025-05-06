@@ -83,6 +83,30 @@ def logistic_loss(yc, y, u):
     loss = indicator * log_u + (1 - indicator) * log_1mu
     return -jnp.mean(jnp.sum(loss, axis=(1, 2)))
 
+def crps_loss(yc, y, u):
+    """CRPS loss for CDF estimation.
+    yc: (n_yc, 1), y: (n, 1), u: (n_yc, 1) = F(yc | x)
+    Returns scalar loss.
+
+    ... WARNING: untested ... just sketch
+    """
+    # Compute indicator: (n, n_yc, 1)
+    indicator = (y[:, None, :] <= yc[None, :, :]).astype(jnp.float32)
+
+    # Broadcast u to (n, n_yc, 1)
+    u_bcast = u[None, :, :]
+
+    # Squared error between predicted CDF and empirical CDF
+    se = (u_bcast - indicator) ** 2
+
+    # Optionally use trapezoidal weights over yc
+    # (assumes yc is sorted and evenly spaced — otherwise use jnp.diff)
+    weights = jnp.ones_like(yc).reshape(1, -1, 1)
+
+    loss = jnp.mean(jnp.sum(se * weights, axis=1))
+    return loss
+
+
 
 class QuantileNetworkNoX(eqx.Module):
     """Deep quantile regression without covariates x"""
