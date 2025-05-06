@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import optax
 
-from quantile_regression_common import get_data, set_consistent_figure_params
+from quantile_regression_common import get_data, set_consistent_figure_params, cdf_plot, q_plot, cdf_plot_nox, q_plot_nox, loss_plot, DEFAULT_LEARNING_RATE, DEFAULT_STEPS
 
 # NOTE: WARNING: 2025-05-06 produced converting from tf to jax using claude etc lightly reviewed
 
@@ -15,6 +15,7 @@ from quantile_regression_common import get_data, set_consistent_figure_params
 _mydir = os.path.dirname(os.path.abspath(__file__))
 _fig_dir = os.path.join(_mydir, 'figs/jax')
 os.makedirs(_fig_dir, exist_ok=True)
+
 
 
 def logit(x):
@@ -341,243 +342,97 @@ def make_cdf_x_step(model, opt_state, yc, y, x, opt):
     return model, opt_state, loss
 
 
-def sanity_plot_nox(steps=1000):
+def sanity_plot_nox(steps=DEFAULT_STEPS, learning_rate=DEFAULT_LEARNING_RATE):
     """Train and plot quantile regression without covariates"""
     data = get_data()
     tau, y = data["tau"], data["y"]
 
-    # Initialize model and optimizer
     key = jax.random.PRNGKey(0)
     model = QuantileNetworkNoX(dims=[1, 16, 16, 1], key=key)
-    optimizer = optax.adam(learning_rate=0.01)
+    optimizer = optax.adam(learning_rate=learning_rate)
     opt_state = optimizer.init(eqx.filter(model, eqx.is_array))
 
-    # Training loop
     losses = []
-
     for i in range(steps):
         model, opt_state, loss = make_quantile_step(model, opt_state, tau, y, optimizer)
-        if i % 100 == 0:
+        if i % 1 == 0:
             losses.append(loss.item())
             print(f"Step {i}, Loss: {loss.item():.4f}")
 
-    # Plotting
-    fig = plt.figure(figsize=(10, 6))
-    fig.clf()
-    ax = fig.add_subplot(111)
-
-    # Plot data
-    n = len(y)
-    p = jnp.linspace(1.0 / n, 1 - 1.0 / n, n)
-    i = jnp.argsort(y[:, 0])
-    ax.plot(p, y[i, 0], ".", label="data", alpha=0.5)
-
-    # Plot quantiles
     q = jax.vmap(model)(tau).squeeze()
-    ax.plot(tau.squeeze(), q, "g.-", label='fit', linewidth=2)
 
-    ax.legend()
-    ax.set_xlabel("tau: $P(Y < y)$")
-    ax.set_ylabel('y')
-    ax.set_title('quantile')
-    fig.tight_layout()
+    loss_plot(losses, 'qloss_nox', _fig_dir)
 
-    fig_path = os.path.join(_fig_dir, 'q_nox.png')
-    plt.savefig(fig_path)
-    plt.show()
+    q_plot_nox(y, q, tau, _fig_dir)
 
-    return {"model": model, "losses": losses, "data": data}
-
-
-def cdfsanity_plot_nox(steps=1000):
+def cdfsanity_plot_nox(steps=DEFAULT_STEPS, learning_rate=DEFAULT_LEARNING_RATE):
     """Train and plot CDF estimation without covariates"""
     data = get_data()
     yc, y = data["yc"], data["y"]
 
-    # Initialize model and optimizer
     key = jax.random.PRNGKey(0)
     model = CDFNetworkNoX(dims=[1, 16, 16, 1], key=key)
-    optimizer = optax.adam(learning_rate=0.01)
+    optimizer = optax.adam(learning_rate=learning_rate)
     opt_state = optimizer.init(eqx.filter(model, eqx.is_array))
 
-    # Training loop
     losses = []
-
     for i in range(steps):
         model, opt_state, loss = make_cdf_step(model, opt_state, yc, y, optimizer)
-        if i % 100 == 0:
+        if i % 1 == 0:
             losses.append(loss.item())
             print(f"Step {i}, Loss: {loss.item():.4f}")
 
-    # Plotting
-    fig = plt.figure(figsize=(10, 6))
-    fig.clf()
-    ax = fig.add_subplot(111)
-
-    # Plot data
-    n = len(y)
-    p = jnp.linspace(1.0 / n, 1 - 1.0 / n, n)
-    i = jnp.argsort(y[:, 0])
-    ax.plot(p, y[i, 0], ".", label="data", alpha=0.5)
-
-    # Plot CDF
     cdf = jax.vmap(model)(yc).squeeze()
-    ax.plot(cdf, yc.squeeze(), "g.-", label='fit', linewidth=2)
 
-    ax.legend()
-    ax.set_xlabel("$P(Y < y)$")
-    ax.set_ylabel('y')
-    ax.set_title('CDF')
-    fig.tight_layout()
+    loss_plot(losses, 'cdfloss_nox', _fig_dir)
 
-    fig_path = os.path.join(_fig_dir, 'p_nox.png')
-    plt.savefig(fig_path)
-    plt.show()
-
-    return {"model": model, "losses": losses, "data": data}
+    cdf_plot_nox(y, cdf, yc, _fig_dir)
 
 
-def sanity_plot(steps=1000):
+
+def sanity_plot(steps=DEFAULT_STEPS, learning_rate=DEFAULT_LEARNING_RATE):
     """Train and plot quantile regression with covariates"""
     data = get_data()
     tau, y, x = data["tau"], data["y"], data["x"]
     sigma, mu = data["sigma"], data["mu"]
 
-    # Initialize model and optimizer
     key = jax.random.PRNGKey(0)
     model = QuantileNetwork(tau_dims=[1, 64, 64], x_dims=[1, 64, 64], final_dims=[64, 1], key=key)
-    optimizer = optax.adam(learning_rate=0.01)
+    optimizer = optax.adam(learning_rate=learning_rate)
     opt_state = optimizer.init(eqx.filter(model, eqx.is_array))
 
-    # Training loop
     losses = []
-
     for i in range(steps):
         model, opt_state, loss = make_quantile_x_step(model, opt_state, tau, y, x, optimizer)
-        if i % 100 == 0:
+        if i % 1 == 0:
             losses.append(loss.item())
             print(f"Step {i}, Loss: {loss.item():.4f}")
 
-    # Plotting
-    fig = plt.figure(1, figsize=(12, 6))
-    fig.clf()
-    ax1 = fig.add_subplot(121)
-    ax2 = fig.add_subplot(122)
+    q = model(tau, x).squeeze()
 
-    # Plot data and generating process
-    ax1.plot(x[:, 0], y.squeeze(), ".", alpha=0.5, label='data')
-    ax1.plot(x[:, 0], mu.squeeze(), label='mu')
-    ax1.plot(x[:, 0], sigma.squeeze(), label='sigma')
-    ax1.legend()
-    ax1.set_ylabel("y")
-    ax1.set_xlabel(f"x[:,0] (x.shape={x.shape})")
-    ax1.set_title('generating process')
+    loss_plot(losses, 'qloss', _fig_dir)
 
-    # Plot data and quantiles
-    ax2.plot(x[:, 0], y.squeeze(), ".", alpha=0.5)
-
-    # Generate quantiles for each tau value at each x point
-    for t in tau:
-        q_vals = []
-        for x_i in x:
-            q_vals.append(model(t, x_i[None, :]).squeeze())
-        q = jnp.array(q_vals)
-        ax2.plot(x[:, 0], q, alpha=0.5)
-
-    ax2.set_xlabel(f"x[:,0] (x.shape={x.shape})")
-    ax2.set_title('inferred quantiles')
-
-    fig.tight_layout()
-
-    # Plot losses
-    fig2 = plt.figure(figsize=(8, 6))
-    ax = fig2.add_subplot(111)
-    ax.semilogy(range(0, steps, 100), losses)
-    ax.set_xlabel("Steps (x100)")
-    ax.set_ylabel("Loss")
-    ax.set_title("Training Loss")
-
-    fig_path = os.path.join(_fig_dir, 'q.png')
-    plt.figure(1)
-    plt.savefig(fig_path)
-    plt.show()
-
-    return {"model": model, "losses": losses, "data": data}
+    q_plot(x, y, mu, sigma, q, tau, losses, _fig_dir)
 
 
-def cdfsanity_plot(steps=1000):
+def cdfsanity_plot(steps=DEFAULT_STEPS, learning_rate=DEFAULT_LEARNING_RATE):
     """Train and plot CDF estimation with covariates"""
     data = get_data()
     yc, y, x = data["yc"], data["y"], data["x"]
     sigma, mu = data["sigma"], data["mu"]
-
-    # Initialize model and optimizer
     key = jax.random.PRNGKey(0)
     model = CDFNetwork(yc_dims=[1, 64, 64], x_dims=[1, 64, 64], final_dims=[64, 1], key=key)
-    optimizer = optax.adam(learning_rate=0.01)
+    optimizer = optax.adam(learning_rate=learning_rate)
     opt_state = optimizer.init(eqx.filter(model, eqx.is_array))
-
-    # Training loop
     losses = []
-
     for i in range(steps):
         model, opt_state, loss = make_cdf_x_step(model, opt_state, yc, y, x, optimizer)
-        if i % 100 == 0:
+        if i % 1 == 0:
             losses.append(loss.item())
             print(f"Step {i}, Loss: {loss.item():.4f}")
-
-    # Plotting
-    fig = plt.figure(1, figsize=(12, 6))
-    fig.clf()
-    ax1 = fig.add_subplot(121)
-    ax2 = fig.add_subplot(122)
-
-    # Plot data and generating process
-    ax1.plot(x[:, 0], y.squeeze(), ".", alpha=0.5, label='data')
-    ax1.plot(x[:, 0], mu.squeeze(), label='mu')
-    ax1.plot(x[:, 0], sigma.squeeze(), label='sigma')
-    ax1.legend()
-    ax1.set_ylabel("y")
-    ax1.set_xlabel(f"x[:,0] (x.shape={x.shape})")
-    ax1.set_title('generating process')
-
-    # Plot data
-    ax2.plot(x[:, 0], y.squeeze(), ".", alpha=0.5)
-
-    # Create a grid for the contour plot
-    x_grid = np.linspace(float(x.min()), float(x.max()), 50)
-    yc_grid = np.linspace(float(yc.min()), float(yc.max()), 50)
-    X, Y = np.meshgrid(x_grid, yc_grid)
-
-    # Compute CDF values for the grid
-    Z = np.zeros_like(X)
-    for i in range(X.shape[0]):
-        for j in range(X.shape[1]):
-            Z[i, j] = float(model(jnp.array([[Y[i, j]]]), jnp.array([[X[i, j]]])).squeeze())
-
-    # Create contour plot
-    contour = ax2.contour(X, Y, Z)
-    plt.colorbar(contour, ax=ax2)
-    ax2.set_xlabel(f"x[:,0] (x.shape={x.shape})")
-    ax2.set_ylabel("y")
-    ax2.set_title('inferred cdf (contour plot)')
-
-    fig.tight_layout()
-
-    # Plot losses
-    fig2 = plt.figure(figsize=(8, 6))
-    ax = fig2.add_subplot(111)
-    ax.semilogy(range(0, steps, 100), losses)
-    ax.set_xlabel("Steps (x100)")
-    ax.set_ylabel("Loss")
-    ax.set_title("Training Loss")
-
-    fig_path = os.path.join(_fig_dir, 'p.png')
-    plt.figure(1)
-    plt.savefig(fig_path)
-    plt.show()
-
-    return {"model": model, "losses": losses, "data": data}
+    cdf = model(yc, x).squeeze()
+    loss_plot(losses, 'cdfloss', _fig_dir)
+    cdf_plot(x, y, mu, sigma, cdf, yc, losses, _fig_dir)
 
 
 if __name__ == '__main__':

@@ -6,7 +6,7 @@ import numpy as np
 import tensorflow as tf
 import tensorflow.keras as keras
 
-from quantile_regression_common import get_data, set_consistent_figure_params
+from quantile_regression_common import get_data, set_consistent_figure_params, cdf_plot, q_plot, q_plot_nox, cdf_plot_nox, loss_plot, DEFAULT_LEARNING_RATE, DEFAULT_STEPS
 
 _mydir = os.path.dirname(os.path.abspath(__file__))
 _fig_dir = os.path.join(_mydir, 'figs/tf')
@@ -161,12 +161,12 @@ class CDFNetworkNoX(tf.keras.models.Model):
         return self.cdf(yc)
 
 
-def sanity_plot_nox(steps=1000):
+def sanity_plot_nox(steps=DEFAULT_STEPS, learning_rate=DEFAULT_LEARNING_RATE):
     l = get_data()
     tau = l["tau"]
     y = l["y"]
     model = QuantileNetworkNoX(dims=[16, 16, 1])
-    opt = tf.keras.optimizers.Adam(learning_rate=0.01)
+    opt = tf.keras.optimizers.Adam(learning_rate=learning_rate)
 
     @tf.function
     def one_step():
@@ -176,38 +176,24 @@ def sanity_plot_nox(steps=1000):
         opt.apply_gradients(zip(g, model.trainable_variables))
         return loss
 
-    # model.compile(loss=rho_quantile_loss, optimizer=opt)
-    fig = plt.figure(1)
-    fig.clf()
-    ax = fig.subplots(1, 1)
-    n = len(y)
-    p = np.linspace(1.0 / n, 1 - 1.0 / n, n)
-    i = y[:, 0].argsort()
-    ax.plot(p, y[i, 0], ".", label="data", alpha=0.5)
-
     loss = list()
     for i in range(steps):
         loss.append(one_step())
+
     q = model.quantile(tau).numpy().squeeze()
-    ax.plot(tau, q, "g.-", label='fit', linewidth=2)
-    ax.legend()
-    ax.set_xlabel("tau: $P(Y < y)$")
-    ax.set_ylabel('y')
-    ax.set_title('quantile')
-    fig.tight_layout()
-    fig_path = os.path.join(_fig_dir, 'q_nox.png')
-    plt.savefig(fig_path)
-    plt.show()
-    return locals()
+
+    loss_plot(loss, 'qloss_nox', _fig_dir)
+
+    q_plot_nox(y, q, tau, _fig_dir)
 
 
-def cdfsanity_plot_nox(steps=1000):
+def cdfsanity_plot_nox(steps=DEFAULT_STEPS, learning_rate=DEFAULT_LEARNING_RATE):
     l = get_data()
     x = l["x"]
     yc = l["yc"]
     y = l["y"]
     model = CDFNetworkNoX(dims=[16, 16, 1])
-    opt = tf.keras.optimizers.Adam(learning_rate=0.01)
+    opt = tf.keras.optimizers.Adam(learning_rate=learning_rate)
 
     @tf.function
     def one_step():
@@ -217,29 +203,14 @@ def cdfsanity_plot_nox(steps=1000):
         opt.apply_gradients(zip(g, model.trainable_variables))
         return loss
 
-    # # model.compile(loss=rho_quantile_loss, optimizer=opt)
-    fig = plt.figure(1)
-    fig.clf()
-    ax = fig.subplots(1, 1)
-    n = len(y)
-    p = np.linspace(1.0 / n, 1 - 1.0 / n, n)
-    i = y[:, 0].argsort()
-    ax.plot(p, y[i, 0], ".", label="data", alpha=0.5)
-
     loss = list()
     for i in range(steps):
         loss.append(one_step())
     cdf = model.cdf(yc).numpy().squeeze()
-    ax.plot(cdf, yc, "g.-", label='fit', linewidth=2)
-    ax.legend()
-    ax.set_xlabel("$P(Y < y)$")
-    ax.set_ylabel('y')
-    ax.set_title('CDF')
-    fig.tight_layout()
-    fig_path = os.path.join(_fig_dir, 'p_nox.png')
-    plt.savefig(fig_path)
-    plt.show()
-    return locals()
+
+    loss_plot(loss, 'cdfloss_nox', _fig_dir)
+
+    cdf_plot_nox(y, cdf, yc, _fig_dir)
 
 
 class QuantileNetwork(tf.keras.models.Model):
@@ -314,7 +285,7 @@ class CDFNetwork(tf.keras.models.Model):
         return self.epsilon + (1 - 2 * self.epsilon) * u
 
 
-def sanity_plot(steps=1000):
+def sanity_plot(steps=DEFAULT_STEPS, learning_rate=DEFAULT_LEARNING_RATE):
     l = get_data()
     tau = l["tau"]
     y = l["y"]
@@ -322,7 +293,7 @@ def sanity_plot(steps=1000):
     sigma = l["sigma"]
     mu = l["mu"]
     model = QuantileNetwork(tau_dims=[64, 64], x_dims=[64, 64], final_dims=[1])
-    opt = tf.keras.optimizers.Adam(learning_rate=0.01)
+    opt = tf.keras.optimizers.Adam(learning_rate=learning_rate)
 
     @tf.function
     def one_step():
@@ -332,41 +303,16 @@ def sanity_plot(steps=1000):
         opt.apply_gradients(zip(g, model.trainable_variables))
         return loss
 
-    # does not work with, keras mangles dimensions
-    # model.compile(loss=rho_quantile_loss, optimizer=opt)
-
-    fig = plt.figure(1, figsize=(12, 6))
-    fig.clf()
-    ax = fig.subplots(1, 2)
-    ax[0].plot(x[:, 0], y.squeeze(), ".", alpha=0.5, label='data')
-    ax[0].plot(x[:, 0], mu, label='mu')
-    ax[0].plot(x[:, 0], sigma, label='sigma')
-    ax[0].legend()
-    ax[0].set_ylabel("y")
-    ax[0].set_xlabel(f"x[:,0] (x.shape={x.shape})")
-    ax[0].set_title('generating process')
-    ax[1].plot(x[:, 0], y.squeeze(), ".", alpha=0.5)
     loss = list()
     for i in range(steps):
         loss.append(one_step())
     q = model.quantile(tau, x).numpy().squeeze()
-    ax[1].plot(x[:, 0], q, alpha=0.5)
-    ax[1].set_xlabel(f"x[:,0] (x.shape={x.shape})")
-    ax[1].set_title('inferred quantiles')
-    fig.tight_layout()
 
-    fig2 = plt.figure(2, figsize=(12, 6))
-    ax = fig2.gca()
-    ax.semilogy(loss)
+    loss_plot(loss, 'qloss', _fig_dir)
 
-    fig_path = os.path.join(_fig_dir, 'q.png')
-    plt.figure(1)
-    plt.savefig(fig_path)
-    plt.show()
-    return locals()
+    q_plot(x, y, mu, sigma, q, tau, loss, _fig_dir)
 
-
-def cdfsanity_plot(steps=5000):
+def cdfsanity_plot(steps=5000, learning_rate=DEFAULT_LEARNING_RATE):
     l = get_data()
     yc = l["yc"]
     y = l["y"]
@@ -374,7 +320,7 @@ def cdfsanity_plot(steps=5000):
     sigma = l["sigma"]
     mu = l["mu"]
     model = CDFNetwork(yc_dims=[64, 64], x_dims=[64, 64], final_dims=[1])
-    opt = tf.keras.optimizers.Adam(learning_rate=0.01)
+    opt = tf.keras.optimizers.Adam(learning_rate=learning_rate)
 
     @tf.function
     def one_step():
@@ -384,42 +330,14 @@ def cdfsanity_plot(steps=5000):
         opt.apply_gradients(zip(g, model.trainable_variables))
         return loss
 
-    # does not work with, keras mangles dimensions
-    # model.compile(loss=rho_quantile_loss, optimizer=opt)
-
-    fig = plt.figure(1, figsize=(12, 6))
-    fig.clf()
-    ax = fig.subplots(1, 2)
-    ax[0].plot(x[:, 0], y.squeeze(), ".", alpha=0.5, label='data')
-    ax[0].plot(x[:, 0], mu, label='mu')
-    ax[0].plot(x[:, 0], sigma, label='sigma')
-    ax[0].legend()
-    ax[0].set_ylabel("y")
-    ax[0].set_xlabel(f"x[:,0] (x.shape={x.shape})")
-    ax[0].set_title('generating process')
-    ax[1].plot(x[:, 0], y.squeeze(), ".", alpha=0.5)
-
     loss = list()
     for i in range(steps):
         loss.append(one_step())
     cdf = model.cdf(yc, x).numpy().squeeze()
-    # ax[1].plot(x[:, 0], cdf, alpha=0.5)
-    X = np.repeat(x, cdf.shape[1], axis=1)
-    Y = np.repeat(yc.T, cdf.shape[0], axis=0)
-    ax[1].contour(X, Y, cdf)
-    ax[1].set_xlabel(f"x[:,0] (x.shape={x.shape})")
-    ax[1].set_title('inferred cdf (contour plot)')
-    fig.tight_layout()
 
-    fig2 = plt.figure(2, figsize=(12, 6))
-    ax = fig2.gca()
-    ax.semilogy(loss)
+    loss_plot(loss, 'cdfloss', _fig_dir)
 
-    fig_path = os.path.join(_fig_dir, 'p.png')
-    plt.figure(1)
-    plt.savefig(fig_path)
-    plt.show()
-    return locals()
+    cdf_plot(x, y, mu, sigma, cdf, yc, loss, _fig_dir)
 
 
 if __name__ == '__main__':
