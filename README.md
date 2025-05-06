@@ -14,8 +14,8 @@ The functions $u$, $v$ must be monotonic in $\tau$ and $y_c$ respectively.
 
 <table>
 <tr>
-  <td><b>TensorFlow Implementation</b></td>
-  <td><b>JAX Implementation</b></td>
+  <td><b>TensorFlow</b></td>
+  <td><b>JAX</b></td>
 </tr>
 <tr>
   <td><img src="figs/tf/q_nox.png" width="600"></td>
@@ -27,8 +27,8 @@ The functions $u$, $v$ must be monotonic in $\tau$ and $y_c$ respectively.
 
 <table>
 <tr>
-  <td><b>TensorFlow Implementation</b></td>
-  <td><b>JAX Implementation</b></td>
+  <td><b>TensorFlow</b></td>
+  <td><b>JAX</b></td>
 </tr>
 <tr>
   <td><img src="figs/tf/p_nox.png" width="600"></td>
@@ -42,8 +42,8 @@ The functions $u$, $v$ must be monotonic in $\tau$ and $y_c$ respectively.
 
 <table>
 <tr>
-  <td><b>TensorFlow Implementation</b></td>
-  <td><b>JAX Implementation</b></td>
+  <td><b>TensorFlow</b></td>
+  <td><b>JAX</b></td>
 </tr>
 <tr>
   <td><img src="figs/tf/q.png" width="600"></td>
@@ -55,8 +55,8 @@ The functions $u$, $v$ must be monotonic in $\tau$ and $y_c$ respectively.
 
 <table>
 <tr>
-  <td><b>TensorFlow Implementation</b></td>
-  <td><b>JAX Implementation</b></td>
+  <td><b>TensorFlow</b></td>
+  <td><b>JAX</b></td>
 </tr>
 <tr>
   <td><img src="figs/tf/p.png" width="600"></td>
