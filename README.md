@@ -21,6 +21,10 @@ The functions $u$, $v$ must be monotonic in $\tau$ and $y_c$ respectively.
   <td><img src="figs/tf/q_nox.png" width="600"></td>
   <td><img src="figs/jax/q_nox.png" width="600"></td>
 </tr>
+<tr>
+  <td><img src="figs/tf/qloss_nox.png" width="600"></td>
+  <td><img src="figs/jax/qloss_nox.png" width="600"></td>
+</tr>
 </table>
 
 ### CDF Estimation via Logistic Regression with Monotone Network
@@ -28,11 +32,18 @@ The functions $u$, $v$ must be monotonic in $\tau$ and $y_c$ respectively.
 <table>
 <tr>
   <td><b>TensorFlow</b></td>
-  <td><b>JAX</b></td>
+  <td><b>JAX (logistic)</b></td>
+  <td><b>JAX (CRPS)</b></td>
 </tr>
 <tr>
   <td><img src="figs/tf/p_nox.png" width="600"></td>
-  <td><img src="figs/jax/p_nox.png" width="600"></td>
+  <td><img src="figs/jax/p_nox_logistic.png" width="600"></td>
+  <td><img src="figs/jax/p_nox_crps.png" width="600"></td>
+</tr>
+<tr>
+  <td><img src="figs/tf/cdfloss_nox.png" width="600"></td>
+  <td><img src="figs/jax/cdfloss_nox_logistic.png" width="600"></td>
+  <td><img src="figs/jax/cdfloss_nox_crps.png" width="600"></td>
 </tr>
 </table>
 
@@ -49,6 +60,10 @@ The functions $u$, $v$ must be monotonic in $\tau$ and $y_c$ respectively.
   <td><img src="figs/tf/q.png" width="600"></td>
   <td><img src="figs/jax/q.png" width="600"></td>
 </tr>
+<tr>
+  <td><img src="figs/tf/qloss.png" width="600"></td>
+  <td><img src="figs/jax/qloss.png" width="600"></td>
+</tr>
 </table>
 
 ### CDF Estimation via Logistic Regression with Monotone Network
@@ -56,17 +71,25 @@ The functions $u$, $v$ must be monotonic in $\tau$ and $y_c$ respectively.
 <table>
 <tr>
   <td><b>TensorFlow</b></td>
-  <td><b>JAX</b></td>
+  <td><b>JAX (logistic)</b></td>
+  <td><b>JAX (CRPS)</b></td>
 </tr>
 <tr>
   <td><img src="figs/tf/p.png" width="600"></td>
-  <td><img src="figs/jax/p.png" width="600"></td>
+  <td><img src="figs/jax/p_logistic.png" width="600"></td>
+  <td><img src="figs/jax/p_crps.png" width="600"></td>
+</tr>
+<tr>
+  <td><img src="figs/tf/cdfloss.png" width="600"></td>
+  <td><img src="figs/jax/cdfloss_logistic.png" width="600"></td>
+  <td><img src="figs/jax/cdfloss_crps.png" width="600"></td>
 </tr>
 </table>
 
 ## TODO
 
 - do more quantitative error plots etc.
-- consider CRPS (Continuous Ranked Probability Score) instead of CDF loss
 - normalizing flows ... i.e. round trip cdf and quantile as consistency constraint ... where is this done, is it actually doing anything to include this constraint.
 - randomize $\tau$ sampling during training in jax instead of grid ...
+- regularization/calibration/conformal prediction
+- review the translation to jax and make sure arch is actually the same as tf

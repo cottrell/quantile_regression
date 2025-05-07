@@ -39,7 +39,7 @@ class NonNegDense(eqx.Module):
         self.activation = activation
 
     def __call__(self, x):
-        w = jnp.abs(self.weight)  # constraint enforced here
+        w = jnp.clip(self.weight, 0, None)  # enforce non-negativity
         out = x @ w.T + self.bias
         return out if self.activation is None else self.activation(out)
 
@@ -325,12 +325,12 @@ def make_quantile_step(model, opt_state, tau, y, opt):
 
 
 @eqx.filter_jit
-def make_cdf_step(model, opt_state, yc, y, opt):
+def make_cdf_step(model, opt_state, yc, y, opt, loss_fn_in):
     """JIT-compiled training step for CDF model without x"""
 
     def loss_fn(model):
         u = model(yc)
-        return logistic_loss(yc, y, u)
+        return loss_fn_in(yc, y, u)
 
     loss, grads = eqx.filter_value_and_grad(loss_fn)(model)
     updates, opt_state = opt.update(grads, opt_state)
@@ -353,12 +353,12 @@ def make_quantile_x_step(model, opt_state, tau, y, x, opt):
 
 
 @eqx.filter_jit
-def make_cdf_x_step(model, opt_state, yc, y, x, opt):
+def make_cdf_x_step(model, opt_state, yc, y, x, opt, loss_fn_in):
     """JIT-compiled training step for CDF model with x"""
 
     def loss_fn(model):
         u = model(yc, x)
-        return logistic_loss(yc, y, u)
+        return loss_fn_in(yc, y, u)
 
     loss, grads = eqx.filter_value_and_grad(loss_fn)(model)
     updates, opt_state = opt.update(grads, opt_state)
@@ -389,8 +389,15 @@ def sanity_plot_nox(steps=DEFAULT_STEPS, learning_rate=DEFAULT_LEARNING_RATE):
 
     q_plot_nox(y, q, tau, _fig_dir)
 
-def cdfsanity_plot_nox(steps=DEFAULT_STEPS, learning_rate=DEFAULT_LEARNING_RATE):
+def cdfsanity_plot_nox(steps=DEFAULT_STEPS, learning_rate=DEFAULT_LEARNING_RATE, loss='logistic'):
     """Train and plot CDF estimation without covariates"""
+    loss_name = loss
+    if loss == 'logistic':
+        loss_fn = logistic_loss
+    elif loss == 'crps':
+        loss_fn = crps_loss
+    else:
+        raise ValueError(f"Unknown loss function: {loss}")
     data = get_data()
     yc, y = data["yc"], data["y"]
 
@@ -401,16 +408,16 @@ def cdfsanity_plot_nox(steps=DEFAULT_STEPS, learning_rate=DEFAULT_LEARNING_RATE)
 
     losses = []
     for i in range(steps):
-        model, opt_state, loss = make_cdf_step(model, opt_state, yc, y, optimizer)
+        model, opt_state, loss = make_cdf_step(model, opt_state, yc, y, optimizer, loss_fn)
         if i % 1 == 0:
             losses.append(loss.item())
             print(f"Step {i}, Loss: {loss.item():.4f}")
 
     cdf = jax.vmap(model)(yc).squeeze()
 
-    loss_plot(losses, 'cdfloss_nox', _fig_dir)
+    loss_plot(losses, f'cdfloss_nox_{loss_name}', _fig_dir)
 
-    cdf_plot_nox(y, cdf, yc, _fig_dir)
+    cdf_plot_nox(y, cdf, yc, _fig_dir, extra_name=loss_name)
 
 
 
@@ -439,8 +446,16 @@ def sanity_plot(steps=DEFAULT_STEPS, learning_rate=DEFAULT_LEARNING_RATE):
     q_plot(x, y, mu, sigma, q, tau, losses, _fig_dir)
 
 
-def cdfsanity_plot(steps=DEFAULT_STEPS, learning_rate=DEFAULT_LEARNING_RATE):
+def cdfsanity_plot(steps=DEFAULT_STEPS, learning_rate=DEFAULT_LEARNING_RATE, loss='logistic'):
     """Train and plot CDF estimation with covariates"""
+    loss_name = loss
+    if loss == 'logistic':
+        loss_fn = logistic_loss
+    elif loss == 'crps':
+        loss_fn = crps_loss
+    else:
+        raise ValueError(f"Unknown loss function: {loss}")
+
     data = get_data()
     yc, y, x = data["yc"], data["y"], data["x"]
     sigma, mu = data["sigma"], data["mu"]
@@ -450,19 +465,21 @@ def cdfsanity_plot(steps=DEFAULT_STEPS, learning_rate=DEFAULT_LEARNING_RATE):
     opt_state = optimizer.init(eqx.filter(model, eqx.is_array))
     losses = []
     for i in range(steps):
-        model, opt_state, loss = make_cdf_x_step(model, opt_state, yc, y, x, optimizer)
+        model, opt_state, loss = make_cdf_x_step(model, opt_state, yc, y, x, optimizer, loss_fn)
         if i % 1 == 0:
             losses.append(loss.item())
             print(f"Step {i}, Loss: {loss.item():.4f}")
     cdf = model(yc, x).squeeze()
-    loss_plot(losses, 'cdfloss', _fig_dir)
-    cdf_plot(x, y, mu, sigma, cdf, yc, losses, _fig_dir)
+    loss_plot(losses, f'cdfloss_{loss_name}', _fig_dir)
+    cdf_plot(x, y, mu, sigma, cdf, yc, losses, _fig_dir, extra_name=loss_name)
 
 
 if __name__ == '__main__':
     set_consistent_figure_params()
     plt.ion()
     sanity_plot_nox()
-    cdfsanity_plot_nox()
+    cdfsanity_plot_nox(loss='logistic')
+    cdfsanity_plot_nox(loss='crps')
     sanity_plot()
-    cdfsanity_plot()
+    cdfsanity_plot(loss='logistic')
+    cdfsanity_plot(loss='crps')

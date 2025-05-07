@@ -54,7 +54,8 @@ def set_consistent_figure_params():
     )
 
 
-def cdf_plot(x, y, mu, sigma, cdf, yc, loss, _fig_dir):
+def cdf_plot(x, y, mu, sigma, cdf, yc, loss, _fig_dir, extra_name=None):
+    extra_name = f'_{extra_name}' if extra_name else ''
     fig = plt.figure(1, figsize=(12, 6))
     fig.clf()
     ax = fig.subplots(1, 2)
@@ -78,7 +79,7 @@ def cdf_plot(x, y, mu, sigma, cdf, yc, loss, _fig_dir):
     ax = fig2.gca()
     ax.semilogy(loss)
 
-    fig_path = os.path.join(_fig_dir, 'p.png')
+    fig_path = os.path.join(_fig_dir, f'p{extra_name}.png')
     plt.figure(1)
     plt.savefig(fig_path)
     plt.show()
@@ -112,7 +113,8 @@ def q_plot(x, y, mu, sigma, q, tau, loss, _fig_dir):
     return locals()
 
 
-def cdf_plot_nox(y, cdf, yc, _fig_dir):
+def cdf_plot_nox(y, cdf, yc, _fig_dir, extra_name=None):
+    extra_name = f'_{extra_name}' if extra_name else ''
     fig = plt.figure(1)
     fig.clf()
     ax = fig.subplots(1, 1)
@@ -127,7 +129,7 @@ def cdf_plot_nox(y, cdf, yc, _fig_dir):
     ax.set_ylabel('y')
     ax.set_title('CDF')
     fig.tight_layout()
-    fig_path = os.path.join(_fig_dir, 'p_nox.png')
+    fig_path = os.path.join(_fig_dir, f'p_nox{extra_name}.png')
     plt.savefig(fig_path)
     plt.show()
 
