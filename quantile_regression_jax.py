@@ -161,7 +161,7 @@ class QuantileNetwork(eqx.Module):
         # Tau network layers
         tau_keys = jax.random.split(keys[0], len(tau_dims) - 1)
         self.tau_layers = [
-            Dense(
+            NonNegDense(
                 tau_dims[i],
                 tau_dims[i + 1],
                 key=tau_keys[i],
@@ -184,7 +184,8 @@ class QuantileNetwork(eqx.Module):
                 final_dims[i],
                 final_dims[i + 1],
                 key=final_keys[i],
-                activation=(jax.nn.tanh if i < len(final_dims) - 2 else None),
+                activation=None,
+                # activation=(jax.nn.tanh if i < len(final_dims) - 2 else None),
             )
             for i in range(len(final_dims) - 1)
         ]

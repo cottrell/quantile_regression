@@ -93,3 +93,4 @@ The functions $u$, $v$ must be monotonic in $\tau$ and $y_c$ respectively.
 - randomize $\tau$ sampling during training in jax instead of grid ...
 - regularization/calibration/conformal prediction
 - review the translation to jax and make sure arch is actually the same as tf
+- make sure data is pure and deterministic across envs

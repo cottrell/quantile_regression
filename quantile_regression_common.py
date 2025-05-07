@@ -13,6 +13,7 @@ def get_data(seed=1, m=250, n_x=1, n_tau=11, L=2):
     y ~ N(mu(x), sigma(x))
     """
     random.seed(seed)
+    np.random.seed(seed)
     x = (2 * np.random.rand(m, n_x).astype(np.float64) - 1) * 2
     i = np.argsort(x[:, 0])
     x = x[i]  # to make plotting nicer
