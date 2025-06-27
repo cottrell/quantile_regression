@@ -16,14 +16,17 @@ The functions $u$, $v$ must be monotonic in $\tau$ and $y_c$ respectively.
 <tr>
   <td><b>TensorFlow</b></td>
   <td><b>JAX</b></td>
+  <td><b>PyTorch</b></td>
 </tr>
 <tr>
   <td><img src="figs/tf/q_nox.png" width="600"></td>
   <td><img src="figs/jax/q_nox.png" width="600"></td>
+  <td><img src="figs/pytorch/q_nox.png" width="600"></td>
 </tr>
 <tr>
   <td><img src="figs/tf/qloss_nox.png" width="600"></td>
   <td><img src="figs/jax/qloss_nox.png" width="600"></td>
+  <td><img src="figs/pytorch/qloss_nox.png" width="600"></td>
 </tr>
 </table>
 
@@ -34,16 +37,22 @@ The functions $u$, $v$ must be monotonic in $\tau$ and $y_c$ respectively.
   <td><b>TensorFlow</b></td>
   <td><b>JAX (logistic)</b></td>
   <td><b>JAX (CRPS)</b></td>
+  <td><b>PyTorch (logistic)</b></td>
+  <td><b>PyTorch (CRPS)</b></td>
 </tr>
 <tr>
   <td><img src="figs/tf/p_nox.png" width="600"></td>
   <td><img src="figs/jax/p_nox_logistic.png" width="600"></td>
   <td><img src="figs/jax/p_nox_crps.png" width="600"></td>
+  <td><img src="figs/pytorch/p_nox_logistic.png" width="600"></td>
+  <td><img src="figs/pytorch/p_nox_crps.png" width="600"></td>
 </tr>
 <tr>
   <td><img src="figs/tf/cdfloss_nox.png" width="600"></td>
   <td><img src="figs/jax/cdfloss_nox_logistic.png" width="600"></td>
   <td><img src="figs/jax/cdfloss_nox_crps.png" width="600"></td>
+  <td><img src="figs/pytorch/cdfloss_nox_logistic.png" width="600"></td>
+  <td><img src="figs/pytorch/cdfloss_nox_crps.png" width="600"></td>
 </tr>
 </table>
 
@@ -55,14 +64,17 @@ The functions $u$, $v$ must be monotonic in $\tau$ and $y_c$ respectively.
 <tr>
   <td><b>TensorFlow</b></td>
   <td><b>JAX</b></td>
+  <td><b>PyTorch</b></td>
 </tr>
 <tr>
   <td><img src="figs/tf/q.png" width="600"></td>
   <td><img src="figs/jax/q.png" width="600"></td>
+  <td><img src="figs/pytorch/q.png" width="600"></td>
 </tr>
 <tr>
   <td><img src="figs/tf/qloss.png" width="600"></td>
   <td><img src="figs/jax/qloss.png" width="600"></td>
+  <td><img src="figs/pytorch/qloss.png" width="600"></td>
 </tr>
 </table>
 
@@ -73,16 +85,22 @@ The functions $u$, $v$ must be monotonic in $\tau$ and $y_c$ respectively.
   <td><b>TensorFlow</b></td>
   <td><b>JAX (logistic)</b></td>
   <td><b>JAX (CRPS)</b></td>
+  <td><b>PyTorch (logistic)</b></td>
+  <td><b>PyTorch (CRPS)</b></td>
 </tr>
 <tr>
   <td><img src="figs/tf/p.png" width="600"></td>
   <td><img src="figs/jax/p_logistic.png" width="600"></td>
   <td><img src="figs/jax/p_crps.png" width="600"></td>
+  <td><img src="figs/pytorch/p_logistic.png" width="600"></td>
+  <td><img src="figs/pytorch/p_crps.png" width="600"></td>
 </tr>
 <tr>
   <td><img src="figs/tf/cdfloss.png" width="600"></td>
   <td><img src="figs/jax/cdfloss_logistic.png" width="600"></td>
   <td><img src="figs/jax/cdfloss_crps.png" width="600"></td>
+  <td><img src="figs/pytorch/cdfloss_logistic.png" width="600"></td>
+  <td><img src="figs/pytorch/cdfloss_crps.png" width="600"></td>
 </tr>
 </table>
 
